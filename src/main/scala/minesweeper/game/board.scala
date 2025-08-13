@@ -5,48 +5,61 @@ import scala.util.Random
 /////////////////////////////
 //// Data types for Board////
 /////////////////////////////
-// The internal representation of the board
-// * Input
-// xsize: the board's horizontal size
-// ysize: the board's vertical size
-// tile_map: a map from a coordinate on the board to a tile
-// * Output
-// One of mineboard, player board, or solution board depending on the tile types
-case class Board[Tile] (val xsize: Int, val ysize: Int, val tile_map: Map[Coordinate, Tile]) {
-  // Checks a coordinate is within board boundary
-  // i.e.,
-  // [][][]
-  // [][][]
-  // [][][]
-  // Coordinate(3,1) is not withint the boundary of the above board
-  // * Input
-  // tile_pos: a coordinate to check
-  // * Output
-  // whether the coordinate is within the boundary or not
-  def within_boundary(tile_pos: Coordinate): Boolean = 
-    tile_pos.x > -1 && tile_pos.y > -1 && tile_pos.x < xsize && tile_pos.y < ysize
 
-  // Identifies neighboring coordinates
-  // i.e.,
-  //    0 1 2
-  // 0 [ ][][]
-  // 1 [ ][][]
-  // 2 [x][][]
-  // the neighboring coordinates of marked tile are ((0,1),(1,1),(1,2))
-  // * Input
-  // board: one of solution board, player board, mineboard
-  // tile_pos: a cooredinate on the board
-  // * Output
-  // List of neighboring coordinates
-  def neighbors_inbounds(tile_pos: Coordinate): List[Coordinate] = {
-    val all_neighbors = List((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)).map(
-        (i, j) => Coordinate(tile_pos.x + i, tile_pos.y + j))
+/** The internal representation of the boards
+  * 
+  * @param xsize the board's horizontal size (grows to right)
+  * @param ysize the board's vertical size (grows down)
+  * @param tileMap a map from a coordinate on the board to a tile
+  * @return One of the boards: mineboard, player board, or solution board depending on the type of Tile
+  */
+case class Board[Tile] (val xsize: Int, val ysize: Int, val tileMap: Map[Coordinate, Tile]):
+
+  /** Checks a coordinate is within the board's boundary
+    * 
+    * @param coordinate the coordinate to check
+    * @return whether the coordinate is within the boundary of the board or not
+    * 
+    * @example
+    *    0  1  2
+    * 0 [ ][ ][ ]
+    * 1 [ ][ ][ ]
+    * 2 [x][ ][ ]
+    * 
+    * aboveBoard.withinBoundary(Coordinate(3,1)) 
+    * // false
+    */
+  def withinBoundary(coordinate: Coordinate): Boolean = 
+      coordinate.x > -1 && coordinate.y > -1 && coordinate.x < xsize && coordinate.y < ysize
+
+  /** Calculates neighbor's coordinates in the board
+    * @param coordinate the coordinate we are interested in
+    * @returns the list of neighbor's coordinates within the boundary of the board
+    * 
+    * @example 
+    *    0  1  2
+    * 0 [ ][ ][ ]
+    * 1 [ ][ ][ ]
+    * 2 [x][ ][ ]
+    * 
+    * aboveBoard.neighborsCoordinates(Coordinate(0, 2))
+    * // List(Coordinate(0, 1), Coordinate(1, 1), Coordinate(1, 2))
+    */
+  def neighborsCoordinates(coordinate: Coordinate): List[Coordinate] =
+      val possibleNeighbors = List((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+          .map((i, j) => Coordinate(coordinate.x + i, coordinate.y + j))
     
-    all_neighbors.filter(tile_pos => this.within_boundary(tile_pos))
-  }
-}
+      possibleNeighbors.filter(possibleNeighbor => this.withinBoundary(possibleNeighbor))
 
-// The three types of the boards to make the game work
+
+/**
+  * There are three types of boards to make the game work.
+  * This is a design decision I've made (what was intuitive for me). 
+  * It would be interesting to discuss the pros and cons of this approach.
+  * 
+  * The following are type aliases for the three types of boards 
+  * where T dictates the type of the board.
+  */
 type SolutionBoard = Board[SolutionTile]
 type PlayerBoard = Board[PlayerTile]
 type MineBoard = Board[Boolean]
@@ -107,7 +120,7 @@ def create_mineboard_for_game(difficulty: GameDifficulty): MineBoard = {
   // [ ][*][]
   // val mine_coordinates = List(Coordinate(0, 1), Coordinate(1, 2)) // fixed for test
   
-  val boolean_tile_map = coordinate_keys.map(coordinate => 
+  val boolTileMap = coordinate_keys.map(coordinate => 
     if mine_coordinates.contains(coordinate) 
     then 
       (coordinate, true) // mine
@@ -118,7 +131,7 @@ def create_mineboard_for_game(difficulty: GameDifficulty): MineBoard = {
   Board(
     xsize,
     ysize,
-    boolean_tile_map
+    boolTileMap
   ) 
 }
 
@@ -135,7 +148,7 @@ def create_solutionboard(mineboard: MineBoard): SolutionBoard = {
   Board(
     xsize = mineboard.xsize,
     ysize = mineboard.ysize,
-    tile_map = coordinate_keys.map(coordinate => (coordinate, generate_solution_tile(mineboard, coordinate))).toMap
+    tileMap = coordinate_keys.map(coordinate => (coordinate, generate_solution_tile(mineboard, coordinate))).toMap
   )
 }
 
@@ -160,7 +173,7 @@ def create_mineboard_for_test(mine_locations: Array[Array[Int]]): MineBoard = {
   Board(
     xsize = xlen,
     ysize = ylen,
-    tile_map = coordinate_keys.map(coordinate => (coordinate, mine_locations(coordinate.y)(coordinate.x) == 1 )).toMap
+    tileMap = coordinate_keys.map(coordinate => (coordinate, mine_locations(coordinate.y)(coordinate.x) == 1 )).toMap
   )
 }
 
@@ -179,7 +192,7 @@ def create_playerboard(xsize: Int, ysize: Int): PlayerBoard = {
   Board(
     xsize = xlen,
     ysize = ylen,
-    tile_map = coordinate_keys.map(coordinate => (coordinate, PlayerTile.Hidden)).toMap
+    tileMap = coordinate_keys.map(coordinate => (coordinate, PlayerTile.Hidden)).toMap
   )
 }
 
@@ -192,7 +205,7 @@ def create_playerboard(xsize: Int, ysize: Int): PlayerBoard = {
 def update_player_board(playerboard: PlayerBoard, tile_pos: Coordinate, new_tile: PlayerTile): PlayerBoard = {
   Board(xsize = playerboard.xsize, 
         ysize = playerboard.ysize, 
-        tile_map = playerboard.tile_map + (tile_pos -> new_tile))  
+        tileMap = playerboard.tileMap + (tile_pos -> new_tile))  
 }
 
 
@@ -200,8 +213,8 @@ def update_player_board(playerboard: PlayerBoard, tile_pos: Coordinate, new_tile
 // - If the revealed tile is 0, it revealed all its neighboring tiles
 // - If the revealed tile is a mine, it reveals all existing mines
 def reveal(solution_board: SolutionBoard, tile_pos: Coordinate)(player_board: PlayerBoard): PlayerBoard = {
-  val solution_tile = solution_board.tile_map(tile_pos)
-  val updated_board = player_board.tile_map(tile_pos) match {
+  val solution_tile = solution_board.tileMap(tile_pos)
+  val updated_board = player_board.tileMap(tile_pos) match {
     case PlayerTile.Hidden => update_player_board(player_board, tile_pos, PlayerTile.Revealed(solution_tile))
     case PlayerTile.Flagged(by) => update_player_board(player_board, tile_pos, PlayerTile.RevealedNFlagged(solution_tile, by))
     case _ => player_board
@@ -220,10 +233,10 @@ def reveal(solution_board: SolutionBoard, tile_pos: Coordinate)(player_board: Pl
 // - If a neighboring tile is already revealed, nothing happens
 // - If not, reveals it
 def reveal_neighbors(solution_board: SolutionBoard, player_board: PlayerBoard, tile_pos: Coordinate): PlayerBoard = {
-  val neighbors = solution_board.neighbors_inbounds(tile_pos)
+  val neighbors = solution_board.neighborsCoordinates(tile_pos)
 
   neighbors.foldLeft(player_board)(
-    (acc, tile_pos) => player_board.tile_map(tile_pos) match {
+    (acc, tile_pos) => player_board.tileMap(tile_pos) match {
       case PlayerTile.Revealed(_) => acc
       case PlayerTile.RevealedNFlagged(_, _) => acc
       case _ => reveal(solution_board, tile_pos)(acc)
@@ -236,10 +249,10 @@ def reveal_neighbors(solution_board: SolutionBoard, player_board: PlayerBoard, t
 // Reveals all existing mines on the playerboard
 def reveal_all_mines(solution_board: SolutionBoard, player_board: PlayerBoard): PlayerBoard = {
   val mine_locations = mine_coordinates(solution_board)
-    // solutionboard.tile_map.filter((tile_pos, tile) => tile == SolutionTile.Mine).keys
+    // solutionboard.tileMap.filter((tile_pos, tile) => tile == SolutionTile.Mine).keys
   
   mine_locations.foldLeft(player_board)((acc, pos) => 
-    player_board.tile_map(pos) match {
+    player_board.tileMap(pos) match {
       case PlayerTile.Flagged(flagger) => update_player_board(acc, pos, PlayerTile.RevealedNFlagged(SolutionTile.Mine, flagger))
       case _ => update_player_board(acc, pos, PlayerTile.Revealed(SolutionTile.Mine))
     }
@@ -258,7 +271,7 @@ def reveal_all_mines(solution_board: SolutionBoard, player_board: PlayerBoard): 
 // Some board if the tile was hidden (the only valid case)
 // None, otherwise
 def flag(by: Player, pos: Coordinate)(playerboard: PlayerBoard): Option[PlayerBoard] = {
-  playerboard.tile_map(pos) match {
+  playerboard.tileMap(pos) match {
     case PlayerTile.Hidden => Some(update_player_board(playerboard, pos, PlayerTile.Flagged(by)))
     case _ => None // should not reach this case
   }
@@ -275,7 +288,7 @@ def flag(by: Player, pos: Coordinate)(playerboard: PlayerBoard): Option[PlayerBo
 // Some board if the tile was flagged by the player
 // None, otherwise
 def unflag(player: Player, pos: Coordinate)(playerboard: PlayerBoard): Option[PlayerBoard] = {
-  playerboard.tile_map(pos) match {
+  playerboard.tileMap(pos) match {
     case PlayerTile.Flagged(by) if by.id == player.id => Some(update_player_board(playerboard, pos, PlayerTile.Hidden))
     case PlayerTile.RevealedNFlagged(s_tile, _) => Some(update_player_board(playerboard, pos, PlayerTile.Revealed(s_tile)))
     case _ => None
@@ -299,10 +312,10 @@ def unflag(player: Player, pos: Coordinate)(playerboard: PlayerBoard): Option[Pl
 // * Ouput
 // the number of nieghboring mines
 def count_neighboring_mines(mineboard: MineBoard, tile_pos: Coordinate): Int = {
-  val neighbors = mineboard.neighbors_inbounds(tile_pos)
+  val neighbors = mineboard.neighborsCoordinates(tile_pos)
 
   // for each neighboring tile, add 1 if the tile is true (there is a mine)
-  neighbors.foldLeft(0)((acc, tile_pos) => if mineboard.tile_map(tile_pos) then acc + 1 else acc )
+  neighbors.foldLeft(0)((acc, tile_pos) => if mineboard.tileMap(tile_pos) then acc + 1 else acc )
 }
 
 
@@ -316,7 +329,7 @@ def count_neighboring_mines(mineboard: MineBoard, tile_pos: Coordinate): Int = {
 def generate_solution_tile(mineboard: MineBoard, tile_pos: Coordinate): SolutionTile = {
   val num_mines_in_neighbor = count_neighboring_mines(mineboard, tile_pos)
   
-  if mineboard.tile_map(tile_pos) then
+  if mineboard.tileMap(tile_pos) then
     SolutionTile.Mine
   else if num_mines_in_neighbor == 0 then
     SolutionTile.Empty
@@ -359,5 +372,5 @@ def generate_coordinate_keys (xlen: Int, ylen: Int) : List[Coordinate] = {
 //   current_board.print_board
   
 // def flagged_equals_mines(solution_board: SolutionBoard, player_board: PlayerBoard): Boolean = 
-  // val mines_pos = solution_board.tile_map.filter((pos, tile) => tile == SolutionTile.Mine).keys
-  // mines_pos.foldLeft(true)((acc, pos) => acc && player_board.tile_map(pos) == PlayerTile.Flagged
+  // val mines_pos = solution_board.tileMap.filter((pos, tile) => tile == SolutionTile.Mine).keys
+  // mines_pos.foldLeft(true)((acc, pos) => acc && player_board.tileMap(pos) == PlayerTile.Flagged
