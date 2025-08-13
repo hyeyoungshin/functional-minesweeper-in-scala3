@@ -37,7 +37,7 @@ class Parse extends AnyFunSuite {
         }
 
         parsed_board match {
-          case Right(board) => println(board.tile_map); assert(board.tile_map(Coordinate(0,0)) == PlayerTile.Hidden)
+          case Right(board) => println(board.tileMap); assert(board.tileMap(Coordinate(0,0)) == PlayerTile.Hidden)
           case Left(msg) => fail(msg)
         }
   }
@@ -56,7 +56,7 @@ class Parse extends AnyFunSuite {
         // 1 [ ][0|0] [ ]
         // 2 [ ][F(1)][1]
         parsed_board match {
-          case Right(board) => println(board.tile_map); assert(board.tile_map(Coordinate(1,2)) == PlayerTile.Flagged(Player(1)))
+          case Right(board) => println(board.tileMap); assert(board.tileMap(Coordinate(1,2)) == PlayerTile.Flagged(Player(1)))
           case Left(msg) => fail(msg)
         }
   }

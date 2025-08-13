@@ -210,7 +210,7 @@ def update_status(playerpool: PlayerPool, tile_pos: Coordinate, solution_board: 
 
 // Checks if a mine is revealed at the coordinate
 def revealed_mine(playerboard: PlayerBoard, pos: Coordinate): Boolean = {
-  playerboard.tile_map(pos) match {
+  playerboard.tileMap(pos) match {
     case PlayerTile.Revealed(SolutionTile.Mine) => true
     case PlayerTile.RevealedNFlagged(SolutionTile.Mine, _) => true
     case _ => false
@@ -243,12 +243,12 @@ def num_flagged_mines_by(playerstate: PlayerState, mine_coordinates: Set[Coordin
   val player = playerstate.player 
   val board = playerstate.board 
 
-  val num_flagged_mines = mine_coordinates.foldRight(0)((pos, acc) => board.tile_map(pos) match {
+  val num_flagged_mines = mine_coordinates.foldRight(0)((pos, acc) => board.tileMap(pos) match {
     case PlayerTile.Flagged(flagger) if player == flagger => acc + 1
     case _ => acc
   })
 
-  val num_all_flags = board.tile_map.foldRight(0)((x, acc) => x._2 match {
+  val num_all_flags = board.tileMap.foldRight(0)((x, acc) => x._2 match {
     case PlayerTile.Flagged(flagger) if player == flagger => acc + 1
     case _ => acc
   })
@@ -264,12 +264,12 @@ def get_points(playerstate: PlayerState, mine_coordinates: Set[Coordinate]): Int
   val player = playerstate.player 
   val board = playerstate.board 
 
-  val num_all_flags = board.tile_map.foldRight(0)((x, acc) => x._2 match {
+  val num_all_flags = board.tileMap.foldRight(0)((x, acc) => x._2 match {
     case PlayerTile.Flagged(flagger) if player == flagger => acc + 1
     case _ => acc
   })
 
-  val num_flagged_mines = mine_coordinates.foldRight(0)((pos, acc) => board.tile_map(pos) match {
+  val num_flagged_mines = mine_coordinates.foldRight(0)((pos, acc) => board.tileMap(pos) match {
     case PlayerTile.Flagged(flagger) if player == flagger => acc + 1
     case _ => acc
   })
@@ -283,7 +283,7 @@ def get_points(playerstate: PlayerState, mine_coordinates: Set[Coordinate]): Int
 
 // Returns the list of coordinates where mines are
 def mine_coordinates(solution_board: SolutionBoard): Set[Coordinate] = {
-  solution_board.tile_map.filter((_, s_tile) => s_tile == SolutionTile.Mine).keys.toSet
+  solution_board.tileMap.filter((_, s_tile) => s_tile == SolutionTile.Mine).keys.toSet
 }
 
 
@@ -293,7 +293,7 @@ def all_mines_flagged(player_board: PlayerBoard, solution_board: SolutionBoard):
   val mines = mine_coordinates(solution_board)
 
   // assumption: set of flagged pos is the same across all playerboards 
-  val all_flagged = player_board.tile_map.map(x => x._2 match {
+  val all_flagged = player_board.tileMap.map(x => x._2 match {
       case PlayerTile.Flagged(_) => Some(x._1) // flagged by this player
       case PlayerTile.RevealedNFlagged(_, _) => Some(x._1)  // flagged by other players
        case _ => None

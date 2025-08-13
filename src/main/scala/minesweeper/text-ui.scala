@@ -138,8 +138,8 @@ the tile at input coordinate is not revealed
  */
 def valid_coordinate(state: GameState, tile_pos: Coordinate): Either[String, Coordinate] = 
   val current_playerboard = state.playerpool.current_playerboard()
-  if current_playerboard.within_boundary(tile_pos) then
-    current_playerboard.tile_map(tile_pos) match {
+  if current_playerboard.withinBoundary(tile_pos) then
+    current_playerboard.tileMap(tile_pos) match {
       case PlayerTile.Revealed(_) => Left("The tile is alreay revealed.")
       case PlayerTile.RevealedNFlagged(_, _) => Left("The tile is alreay revealed.")
       case _ => Right(tile_pos)
@@ -169,7 +169,7 @@ def parse_action(input: String): Either[String, Action] =
 def valid_player_action(state: GameState, player_action: PlayerAction): Either[String, PlayerAction] = {
   val current_player = state.playerpool.current_player()
   val current_playerboard = state.playerpool.current_playerboard()
-  val p_tile = current_playerboard.tile_map(player_action.tile_pos)
+  val p_tile = current_playerboard.tileMap(player_action.tile_pos)
   
 
   player_action.action match {
@@ -288,7 +288,7 @@ def print_status(status: GameStatus): Unit =
 
 def print_board(board: PlayerBoard): Unit = {
   val str_board = Array.fill(board.xsize)(Array.fill(board.ysize)(""))
-  board.tile_map.map((tile_pos, tile) => str_board(tile_pos.y)(tile_pos.x) = tile_to_string(tile))
+  board.tileMap.map((tile_pos, tile) => str_board(tile_pos.y)(tile_pos.x) = tile_to_string(tile))
   print_as_matrix[String](str_board)
 }
 

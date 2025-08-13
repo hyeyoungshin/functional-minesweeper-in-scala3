@@ -1,6 +1,5 @@
 *.db
 *.log
-*.md 
 in*
 out*
 
